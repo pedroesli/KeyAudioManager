@@ -6,7 +6,7 @@ A swift package to make it a lot easier to play audio in your app.
 
 # Installation
 
-In Xcode go to `File -> Add Packages... -> Search or Enter Package URL` and paste in the repo's url: 
+In Xcode go to `File -> Add Packages... -> Search or Enter Package URL` and paste in the repo's url: https://github.com/pedroesli/KeyAudioManager
 
 ## How to use
 
