@@ -37,6 +37,8 @@ public class KeyAudioManager {
     private var singleAudioDelegate = AudioPlayerManagerDelegate()
     private var stopRepeatingAudio = false
     
+    public init(){}
+    
     /// Returns the number of audios contained in the list
     public var audioListSize: Int {
         return audioPlayers.count
