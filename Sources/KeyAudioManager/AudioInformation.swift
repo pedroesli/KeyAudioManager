@@ -9,7 +9,7 @@ import Foundation
 
 ///A struct containing the necessary informations to provide for  `KeyAudioManger` 
 public struct AudioInformation {
-    var key: String
-    var fileName: String
-    var fileExtension: String?
+    public var key: String
+    public var fileName: String
+    public var fileExtension: String?
 }

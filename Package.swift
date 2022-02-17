@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "KeyAudioManager",
-    platforms: [.macOS(.v10_12), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)],
+    platforms: [.macOS(.v10_10), .iOS(.v8), .tvOS(.v9), .watchOS(.v3), .macCatalyst(.v13)],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(

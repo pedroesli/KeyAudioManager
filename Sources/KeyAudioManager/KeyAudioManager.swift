@@ -14,6 +14,23 @@ import AVKit
  */
 public class KeyAudioManager {
     
+    private class DelegateManager{
+        
+        private var audioDelegates: [String: AudioPlayerManagerDelegate] = [:]
+        
+        func addDelegate(key: String){
+            audioDelegates[key] = AudioPlayerManagerDelegate()
+        }
+        
+        func getDelegate(key: String) -> AudioPlayerManagerDelegate? {
+            return audioDelegates[key]
+        }
+        
+        func removeDelegate(key: String) {
+            audioDelegates.removeValue(forKey: key)
+        }
+    }
+    
     private class AudioPlayerManagerDelegate: NSObject, AVAudioPlayerDelegate{
         
         var doneAction: (() -> Void)?
@@ -32,9 +49,9 @@ public class KeyAudioManager {
     }
     
     private var audioPlayers: [String:AVAudioPlayer] = [:]
+    private var delegateManager = DelegateManager()
     private var keySequence: [String] = []
     private var audioSequenceDelegate = AudioPlayerManagerDelegate()
-    private var singleAudioDelegate = AudioPlayerManagerDelegate()
     private var stopRepeatingAudio = false
     
     public init(){}
@@ -89,12 +106,24 @@ public class KeyAudioManager {
     }
     
     /**
+        Returns a `AVAudioPlayer` from the manager audio list
+     
+        - Parameter key: The key of the audio to return
+     
+        - Returns: The `AVAudioPlayer` of this auido or `nil` if it doesn't exist
+     */
+    public func getAudioPlayer(key: String) -> AVAudioPlayer?{
+        return audioPlayers[key]
+    }
+    
+    /**
         Starts playing an audio or resume and audio that was paused
      
         - Parameter key: The key of the audio to play or resume
      */
     public func play(key: String) {
         audioPlayers[key]?.play()
+        
     }
     
     /**
@@ -105,39 +134,12 @@ public class KeyAudioManager {
             - doneAction: Is called after the audio is done playing
      */
     public func play(key: String, doneAction: @escaping () -> Void ) {
-        audioPlayers[key]?.delegate = singleAudioDelegate
+        delegateManager.addDelegate(key: key)
+        audioPlayers[key]?.delegate = delegateManager.getDelegate(key: key)
         play(key: key)
-        singleAudioDelegate.doneAction = {
+        delegateManager.getDelegate(key: key)?.doneAction = {
             doneAction()
-        }
-    }
-    
-    /**
-        Plays audio asynchronously, starting at a specified point in the audio output device’s timeline.
-
-         - Parameters:
-             - key: The key of the audio to play or resume.
-             - time: The audio device time to begin playback. This time must be later than the device’s current time.
-     */
-    public func play(key: String, atTime time: TimeInterval){
-        audioPlayers[key]?.play(atTime: time)
-    }
-    
-    
-    /**
-        Plays audio asynchronously, starting at a specified point in the audio output device’s timeline.
-
-         - Parameters:
-             - key: The key of the audio to play or resume.
-             - time: The audio device time to begin playback. This time must be later than the device’s current time.
-             - doneAction: Is called after the audio is done playing.
-     */
-    public func play(key: String, atTime time: TimeInterval, doneAction: @escaping () -> Void) {
-        audioPlayers[key]?.delegate = singleAudioDelegate
-        play(key: key, atTime: time)
-        
-        singleAudioDelegate.doneAction = {
-            doneAction()
+            self.delegateManager.removeDelegate(key: key)
         }
     }
     
@@ -186,12 +188,13 @@ public class KeyAudioManager {
             - key: They key of audio
             - timeInterval: The time in second for the repeater to wait before playing the next song
      */
-    public func repeatingAudio(key: String, timeInterval: TimeInterval) {
+    public func playLoop(key: String, timeInterval: Int) {
         if !stopRepeatingAudio {
             play(key: key) {
-                Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false, block: { timer in
-                    self.repeatingAudio(key: key, timeInterval: timeInterval)
-                })
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(timeInterval)) {
+                    self.stop(key: key)
+                    self.playLoop(key: key, timeInterval: timeInterval)
+                }
             }
         }
         else{
@@ -200,12 +203,12 @@ public class KeyAudioManager {
     }
     
     /// Stops the repeating audio. (Does not stop the audio if its playing)
-    public func stopRepeat() {
+    public func stopLoop() {
         stopRepeatingAudio = true
     }
     
     /**
-        Plays a list of audio one after the other. Tip: The songs need to be added to the list using `addAudio()`
+        Plays a list of audio one after the other.
      
         - Parameter keys: A list of audio keys to played in sequence
      
@@ -220,14 +223,39 @@ public class KeyAudioManager {
         playFirstOfKeySequence()
     }
     
+    /**
+        Plays a list of audio one after the other.
+     
+        - Parameters:
+            - keys: A list of audio keys to played in sequence
+            - timeInterval: The time in seconds for the sequence to wait before playing the next song
+     
+        - Example: a simple play sequence
+            \
+            ```
+            manager.playInSequence(["audio2", "audio1", "audio4"])
+            ```
+     */
+    public func playInSequence(keys: [String], timeInterval: Int){
+        keySequence = keys
+        playFirstOfKeySequence(timeInterval)
+    }
+    
     ///Plays the first audio from the `keySequence` the plays the rest of the audio until theres no sequence left (uses the player delegate to play the next audio)
-    private func playFirstOfKeySequence(){
+    private func playFirstOfKeySequence(_ timeInterval: Int? = nil){
         guard let firstKey = keySequence.first, let player = audioPlayers[firstKey] else { return }
         player.delegate = audioSequenceDelegate
         player.play()
         keySequence.removeFirst()
         audioSequenceDelegate.doneAction = {
-            self.playFirstOfKeySequence()
+            if let timeInterval = timeInterval {
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(timeInterval)) {
+                    self.playFirstOfKeySequence(timeInterval)
+                }
+            }
+            else {
+                self.playFirstOfKeySequence()
+            }
         }
     }
 }
