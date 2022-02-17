@@ -188,7 +188,7 @@ public class KeyAudioManager {
             - key: They key of audio
             - timeInterval: The time in second for the repeater to wait before playing the next song
      */
-    public func playLoop(key: String, timeInterval: Int) {
+    public func playLoop(key: String, timeInterval: Int = 0) {
         if !stopRepeatingAudio {
             play(key: key) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(timeInterval)) {
@@ -210,22 +210,6 @@ public class KeyAudioManager {
     /**
         Plays a list of audio one after the other.
      
-        - Parameter keys: A list of audio keys to played in sequence
-     
-        - Example: a simple play sequence
-            \
-            ```
-            manager.playInSequence(["audio2", "audio1", "audio4"])
-            ```
-     */
-    public func playInSequence(keys: [String]){
-        keySequence = keys
-        playFirstOfKeySequence()
-    }
-    
-    /**
-        Plays a list of audio one after the other.
-     
         - Parameters:
             - keys: A list of audio keys to played in sequence
             - timeInterval: The time in seconds for the sequence to wait before playing the next song
@@ -233,28 +217,23 @@ public class KeyAudioManager {
         - Example: a simple play sequence
             \
             ```
-            manager.playInSequence(["audio2", "audio1", "audio4"])
+            manager.playInSequence(["audio2", "audio1", "audio4"], timeInterval: 2)
             ```
      */
-    public func playInSequence(keys: [String], timeInterval: Int){
+    public func playInSequence(keys: [String], timeInterval: Int = 0){
         keySequence = keys
         playFirstOfKeySequence(timeInterval)
     }
     
     ///Plays the first audio from the `keySequence` the plays the rest of the audio until theres no sequence left (uses the player delegate to play the next audio)
-    private func playFirstOfKeySequence(_ timeInterval: Int? = nil){
+    private func playFirstOfKeySequence(_ timeInterval: Int){
         guard let firstKey = keySequence.first, let player = audioPlayers[firstKey] else { return }
         player.delegate = audioSequenceDelegate
         player.play()
         keySequence.removeFirst()
         audioSequenceDelegate.doneAction = {
-            if let timeInterval = timeInterval {
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(timeInterval)) {
-                    self.playFirstOfKeySequence(timeInterval)
-                }
-            }
-            else {
-                self.playFirstOfKeySequence()
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(timeInterval)) {
+                self.playFirstOfKeySequence(timeInterval)
             }
         }
     }
