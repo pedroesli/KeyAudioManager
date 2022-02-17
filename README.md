@@ -6,7 +6,7 @@ A swift package to make it a lot easier to play audio in your app.
 
 # Installation
 
-In Xcode go to `File -> Add Packages... -> Search or Enter Package URL` and paste in the repo's url: https://github.com/pedroesli/KeyAudioManager
+In Xcode go to `File -> Add Packages... -> Search or Enter Package URL` and paste in the repo's url: [https://github.com/pedroesli/KeyAudioManager](https://github.com/pedroesli/KeyAudioManager)
 
 ## How to use
 
@@ -38,7 +38,7 @@ audioManager.play(key: "song")
 // Or to play an audio after the first one is done playing
 
 audioManager.play(key: "buttonSound"){
-        audioManager.play(key: "song")
+    audioManager.play(key: "song")
 }
 ```
 
@@ -71,15 +71,15 @@ audioManager.volume(key: "song", 0.5)
 
 ```swift
 // repeats and audio indefinitely with a time interval in between the audios 
-audioManager.repeatingAudio(key: "song", 2.0)
+audioManager.playLoop(key: "song", 2.0)
 
 // To stop repeating audio 
-audioManager.stopRepeat()
+audioManager.stopLoop()
 ```
 
-### sequence (Still testing)
+### sequence
 
 ```swift
-// play a series of audio in a sequence
-audioManage.playInSequence("song", "buttonSound", "sound1", "song")
+// play a series of audio in a sequence with a time interval (seconds) in between the audios
+audioManage.playInSequence("song", "buttonSound", "sound1", "song", timeInterval: 2)
 ```
